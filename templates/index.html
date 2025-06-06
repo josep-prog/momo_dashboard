@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MoMo Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/chart.js"></script>
+</head>
+<body>
+  <h1>MTN MoMo Dashboard</h1>
+  <input id="search" placeholder="Search by person or type...">
+  <div id="data"></div>
+  <canvas id="summaryChart" width="400" height="200"></canvas>
+
+  <script>
+    async function fetchData(query = "") {
+      const res = await fetch(`/api/data?q=${query}`);
+      const data = await res.json();
+      document.getElementById("data").innerHTML = data.map(d =>
+        `<div><b>${d.type}</b> | ${d.amount} RWF | ${d.person} | ${d.date}</div>`
+      ).join("");
+
+      // Draw summary chart
+      const counts = {};
+      data.forEach(d => counts[d.type] = (counts[d.type] || 0) + 1);
+      const ctx = document.getElementById("summaryChart").getContext("2d");
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: '# of Transactions',
+            data: Object.values(counts),
+            backgroundColor: 'skyblue',
+          }]
+        }
+      });
+    }
+
+    document.getElementById("search").addEventListener("input", e => fetchData(e.target.value));
+    fetchData();
+  </script>
+</body>
+</html>
