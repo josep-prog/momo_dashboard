@@ -1,43 +1,308 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MoMo Dashboard</title>
-  <link rel="stylesheet" href="/static/styles.css">
-  <script src="/static/chart.js"></script>
+    <title>MoMo Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>MTN MoMo Dashboard</h1>
-  <input id="search" placeholder="Search by person or type...">
-  <div id="data"></div>
-  <canvas id="summaryChart" width="400" height="200"></canvas>
+    <div class="container">
+        <header>
+            <h1>MTN MoMo Dashboard</h1>
+            <div class="summary-cards">
+                <div class="card">
+                    <h3>Total Transactions</h3>
+                    <p id="totalTransactions">-</p>
+                </div>
+                <div class="card">
+                    <h3>Total Amount</h3>
+                    <p id="totalAmount">-</p>
+                </div>
+            </div>
+        </header>
 
-  <script>
-    async function fetchData(query = "") {
-      const res = await fetch(`/api/data?q=${query}`);
-      const data = await res.json();
-      document.getElementById("data").innerHTML = data.map(d =>
-        `<div><b>${d.type}</b> | ${d.amount} RWF | ${d.person} | ${d.date}</div>`
-      ).join("");
+        <div class="filters">
+            <div class="search-box">
+                <input id="search" placeholder="Search by name or transaction ID...">
+                <div id="searchStatus" class="search-status"></div>
+                <ul id="suggestionsList" class="suggestions-list"></ul>
+            </div>
+            <select id="typeFilter">
+                <option value="">All Types</option>
+                <option value="received">Received Money</option>
+                <option value="payment">Payments</option>
+                <option value="deposit">Bank Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+                <option value="bundle">Internet Bundles</option>
+                <option value="cashpower">Cash Power</option>
+            </select>
+            <div class="date-filters">
+                <input type="date" id="dateFrom" placeholder="From Date">
+                <input type="date" id="dateTo" placeholder="To Date">
+            </div>
+        </div>
 
-      // Draw summary chart
-      const counts = {};
-      data.forEach(d => counts[d.type] = (counts[d.type] || 0) + 1);
-      const ctx = document.getElementById("summaryChart").getContext("2d");
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(counts),
-          datasets: [{
-            label: '# of Transactions',
-            data: Object.values(counts),
-            backgroundColor: 'skyblue',
-          }]
+        <div class="charts">
+            <div class="chart-container">
+                <h2>Transactions by Type</h2>
+                <canvas id="typeChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Amount by Type</h2>
+                <canvas id="amountChart"></canvas>
+            </div>
+        </div>
+
+        <div class="transactions">
+            <h2>Recent Transactions</h2>
+            <div id="data"></div>
+            <div id="noData" class="no-data" style="display: none;">
+                No transactions found matching your search criteria.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let typeChart, amountChart;
+        let searchTimeout;
+        let suggestionTimeout;
+        const searchInput = document.getElementById("search");
+        const suggestionsList = document.getElementById("suggestionsList");
+
+        function formatAmount(amount) {
+            return new Intl.NumberFormat('en-RW', {
+                style: 'currency',
+                currency: 'RWF',
+                minimumFractionDigits: 0
+            }).format(amount);
         }
-      });
-    }
 
-    document.getElementById("search").addEventListener("input", e => fetchData(e.target.value));
-    fetchData();
-  </script>
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleString('en-RW');
+        }
+
+        function showLoading() {
+            document.getElementById("searchStatus").textContent = "Searching...";
+            document.getElementById("searchStatus").className = "search-status loading";
+        }
+
+        function hideLoading() {
+            document.getElementById("searchStatus").textContent = "";
+            document.getElementById("searchStatus").className = "search-status";
+        }
+
+        async function fetchData() {
+            showLoading();
+            
+            const search = document.getElementById("search").value;
+            const type = document.getElementById("typeFilter").value;
+            const from = document.getElementById("dateFrom").value;
+            const to = document.getElementById("dateTo").value;
+
+            const params = new URLSearchParams();
+            if (search) params.append("q", search);
+            if (type) params.append("type", type);
+            if (from) params.append("from", from);
+            if (to) params.append("to", to);
+
+            try {
+                const [dataRes, summaryRes] = await Promise.all([
+                    fetch(`/api/data?${params}`),
+                    fetch('/api/summary')
+                ]);
+
+                const data = await dataRes.json();
+                const summary = await summaryRes.json();
+
+                if (data.success && summary.success) {
+                    updateUI(data.data, summary);
+                } else {
+                    console.error('Error fetching data:', data.error || summary.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateUI(transactions, summary) {
+            // Update summary cards
+            document.getElementById("totalTransactions").textContent = summary.overall_summary.total_transactions;
+            document.getElementById("totalAmount").textContent = formatAmount(summary.overall_summary.total_amount);
+
+            // Show/hide no data message
+            const noDataDiv = document.getElementById("noData");
+            const dataDiv = document.getElementById("data");
+            
+            if (transactions.length === 0) {
+                noDataDiv.style.display = "block";
+                dataDiv.innerHTML = "";
+            } else {
+                noDataDiv.style.display = "none";
+                dataDiv.innerHTML = transactions.map(t => `
+                    <div class="transaction-card">
+                        <div class="transaction-header">
+                            <span class="type ${t.type}">${t.type}</span>
+                            <span class="amount">${formatAmount(t.amount)}</span>
+                        </div>
+                        <div class="transaction-details">
+                            <p><strong>Person:</strong> ${t.person || 'N/A'}</p>
+                            <p><strong>Date:</strong> ${formatDate(t.date)}</p>
+                            ${t.transaction_id ? `<p><strong>Transaction ID:</strong> ${t.transaction_id}</p>` : ''}
+                            ${t.fee > 0 ? `<p><strong>Fee:</strong> ${formatAmount(t.fee)}</p>` : ''}
+                        </div>
+                    </div>
+                `).join("");
+            }
+
+            // Update charts
+            updateCharts(summary.type_summary);
+        }
+
+        function updateCharts(typeSummary) {
+            const types = typeSummary.map(t => t.type);
+            const counts = typeSummary.map(t => t.count);
+            const amounts = typeSummary.map(t => t.total_amount);
+
+            // Update or create type chart
+            if (typeChart) typeChart.destroy();
+            typeChart = new Chart(document.getElementById("typeChart"), {
+                type: 'bar',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        label: 'Number of Transactions',
+                        data: counts,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Update or create amount chart
+            if (amountChart) amountChart.destroy();
+            amountChart = new Chart(document.getElementById("amountChart"), {
+                type: 'pie',
+                data: {
+                    labels: types,
+                    datasets: [{
+                        data: amounts,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.5)',
+                            'rgba(54, 162, 235, 0.5)',
+                            'rgba(255, 206, 86, 0.5)',
+                            'rgba(75, 192, 192, 0.5)',
+                            'rgba(153, 102, 255, 0.5)',
+                            'rgba(255, 159, 64, 0.5)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatAmount(context.raw);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add event listeners with debounce for search
+        document.getElementById("search").addEventListener("input", function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(fetchData, 300);
+            fetchSuggestions(); // Fetch suggestions on input
+        });
+        
+        // Fetch suggestions on input with debounce
+        searchInput.addEventListener("input", function() {
+            clearTimeout(suggestionTimeout);
+            suggestionTimeout = setTimeout(fetchSuggestions, 200);
+        });
+
+        async function fetchSuggestions() {
+            const query = searchInput.value.trim();
+            if (query.length < 2) { // Only fetch suggestions if query is at least 2 characters
+                suggestionsList.innerHTML = "";
+                suggestionsList.style.display = "none";
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/suggestions?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    displaySuggestions(data.suggestions);
+                } else {
+                    console.error('Error fetching suggestions:', data.error);
+                    suggestionsList.innerHTML = "";
+                    suggestionsList.style.display = "none";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                suggestionsList.innerHTML = "";
+                suggestionsList.style.display = "none";
+            }
+        }
+
+        function displaySuggestions(suggestions) {
+            suggestionsList.innerHTML = ""; // Clear previous suggestions
+            if (suggestions.length > 0) {
+                suggestions.forEach(suggestion => {
+                    const li = document.createElement("li");
+                    li.textContent = suggestion;
+                    li.addEventListener("click", function() {
+                        searchInput.value = suggestion;
+                        suggestionsList.innerHTML = ""; // Clear suggestions after selection
+                        suggestionsList.style.display = "none";
+                        fetchData(); // Fetch data for the selected suggestion
+                    });
+                    suggestionsList.appendChild(li);
+                });
+                suggestionsList.style.display = "block";
+            } else {
+                suggestionsList.style.display = "none";
+            }
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener("click", function(event) {
+            if (!searchInput.contains(event.target) && !suggestionsList.contains(event.target)) {
+                suggestionsList.style.display = "none";
+            }
+        });
+        
+        document.getElementById("typeFilter").addEventListener("change", fetchData);
+        document.getElementById("dateFrom").addEventListener("change", fetchData);
+        document.getElementById("dateTo").addEventListener("change", fetchData);
+
+        // Initial load
+        fetchData();
+    </script>
 </body>
 </html>
