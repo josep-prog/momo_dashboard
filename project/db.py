@@ -63,14 +63,14 @@ def get_unique_names():
         conn = sqlite3.connect(DB_NAME)
         c = conn.cursor()
         
-        # Get unique non-null names
-        names = c.execute('''
-            SELECT DISTINCT name 
-            FROM transactions 
-            WHERE name IS NOT NULL AND name != ''
-            ORDER BY name
-        ''').fetchall()
-        conn.close()
+        # # Get unique non-null names
+        # names = c.execute('''
+        #     SELECT DISTINCT name 
+        #     FROM transactions 
+        #     WHERE name IS NOT NULL AND name != ''
+        #     ORDER BY name
+        # ''').fetchall()
+        # conn.close()
 
         # Clean names for filter
         cleaned_names = []
