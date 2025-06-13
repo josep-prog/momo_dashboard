@@ -97,7 +97,6 @@ def get_unique_names():
             if any(w[0].isdigit() for w in words):
                 continue
                 
-            # Skip if any word is a common transaction term
             common_terms = {
                 'payment', 'deposit', 'transfer', 'airtime', 'cash', 'power',
                 'agent', 'mtn', 'momo', 'withdraw', 'balance', 'fee', 'bank',
