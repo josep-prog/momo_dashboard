@@ -18,6 +18,7 @@ h1 {
   color: #333;
 }
 
+/* shaping the card */
 .cards {
   display: flex;
   justify-content: space-between;
