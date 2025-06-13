@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MoMo Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>MoMo Transaction Analysis</h1>
+
+    <div class="cards">
+      <div class="card">
+        <h3>Total Transactions</h3>
+        <p id="total-count">0</p>
+      </div>
+      <div class="card">
+        <h3>Total Amount</h3>
+        <p id="total-amount">0 RWF</p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <select id="filter-type">
+        <option value="all">All Types</option>
+        <option value="incoming">Incoming</option>
+        <option value="payment">Payments</option>
+        <option value="transfer">Transfers</option>
+        <option value="deposit">Deposits</option>
+        <option value="airtime">Airtime</option>
+        <option value="cash_power">Cash Power</option>
+        <option value="withdrawal">Withdrawals</option>
+      </select>
+      <select id="filter-name">
+        <option value="all">All Names</option>
+      </select>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart"></canvas>
+    </div>
+
+    <table id="transactions-table">
+      <thead>
+        <tr>
+          <th>Type</th><th>Amount</th><th>Date</th><th>Name</th><th>Details</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
