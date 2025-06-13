@@ -16,7 +16,23 @@ body {
 h1 {
   text-align: center;
   color: #333;
-}	
+}
+
+.cards {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+}
+
+.card {
+  flex: 1;
+  background: #3498db;
+  color: white;
+  padding: 20px;
+  margin: 0 10px;
+  border-radius: 8px;
+  text-align: center;
+}
 
 .controls {
   display: flex;
