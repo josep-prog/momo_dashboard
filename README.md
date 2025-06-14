@@ -1,6 +1,6 @@
 **Project overview** 
 
-<!-- **DemoVideo : [https://youtu.be/5O-\_yoaGEjQ](https://youtu.be/5O-_yoaGEjQ)** 
+**DemoVideo : [https://youtu.be/5O-\_yoaGEjQ](https://youtu.be/5O-_yoaGEjQ)** 
 
 **Structural map of files**
 
@@ -226,4 +226,4 @@ TEDLA Tesfaye Godebo ([t.godebo@alustudent.com](mailto:t.godebo@alustudent.com) 
 
 Justine Neema ([j.neema@alustudent.com](mailto:j.neema@alustudent.com) )
 
-Vestine Umukundwa ([v.umukundwa@alustudent.com](mailto:v.umukundwa@alustudent.com) ) -->
+Vestine Umukundwa ([v.umukundwa@alustudent.com](mailto:v.umukundwa@alustudent.com) )
