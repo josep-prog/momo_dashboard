@@ -39,17 +39,17 @@ function updateChart(chartData) {
         'transfer': '#FFCE56',
         'deposit': '#4BC0C0',
         'airtime': '#9966FF',
-    //     'cash_power': '#FF9F40',
-    //     'withdrawal': '#2ECC71',
-    //     'other': '#7F8C8D'
-    // };
+        'cash_power': '#FF9F40',
+        'withdrawal': '#2ECC71',
+        'other': '#7F8C8D'
+    };
 
-    // const backgroundColor = chartData.labels.map(label => colorMap[label] || '#FF6384');
+    const backgroundColor = chartData.labels.map(label => colorMap[label] || '#FF6384');
 
-    // chart = new Chart(ctx, {
-    //     type: 'pie',
-    //     data: {
-    //         labels: chartData.labels,
+    chart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: chartData.labels,
             datasets: [{
                 data: chartData.values,
                 backgroundColor: backgroundColor
