@@ -201,22 +201,32 @@ git clone [https://github.com/josep-prog/momo\_dashboard.git](https://github.com
 
 python3 process.py                                         *\# for generating the database*
 
-python3 server.py                                           *\# for running the whole* project
-
-Expected output
+python3 server.py                                           *\# for running the whole* project  
+***Expected output***
 
 **joe@pop-os**:\~/momo\_dashboard-main$ python3 server.py
 
 \* Serving Flask app 'server'  
 \* Debug mode: on  
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.  
-\* Running on [http://127.0.0.1:5000](http://127.0.0.1:5000)   
+\* Running on [http://127.0.0.1:5000](http://127.0.0.1:5000)    
 Press CTRL+C to quit  
 \* Restarting with stat  
 \* Debugger is active\!  
 \* Debugger PIN: 108-673-974
 
-Open browser page this url : [http://127.0.0.1:5000](http://127.0.0.1:5000)
+**Open browser page this url** : [http://127.0.0.1:5000](http://127.0.0.1:5000) 
+
+**NOTE** : please make sure that port 5000 is not in use anywhere else in another opened terminal tab “[http://127.0.0.1:5000](http://127.0.0.1:5000)” 
+
+**If so this is the expected** 
+
+output:joe@pop-os:\~/Downloads/momo\_dashboard$ python3 server.py   
+ \* Serving Flask app 'server'  
+ \* Debug mode: on  
+Address already in use  
+Port 5000 is in use by another program. Either identify and stop that program, or start the server with a different port.  
+joe@pop-os:\~/Downloads/momo\_dashboard$ 
 
 Authors : 
 
